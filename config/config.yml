@@ -1,0 +1,24 @@
+# config/config.yml
+project_name: PED_Lyngby_Model
+description: Simulation of the Positive Energy District concept in Lyngby.
+
+# Define scenarios to run (add more based on scenario suggestions)
+scenarios:
+  baseline:
+    description: "Reference case with existing loads and minimal local assets."
+    # Scenario-specific settings could go here if needed
+    output_subdir: "scenario_baseline" # Subdirectory for results
+
+simulation_settings:
+  solver: highs # Default solver (ensure it's installed)
+  solver_options: {}
+    # e.g., mipgap: 0.01
+  # Time period details (ensure these match your data)
+  start_date: "2025-01-01"
+  num_hours: 72 # Example duration - CHANGE THIS
+
+# Paths (relative to project root)
+paths:
+  data_input: data/input
+  data_output: data/output
+  config: config
