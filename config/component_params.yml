@@ -3,31 +3,29 @@
 
 # Grid Connection Parameters
 grid:
-  capacity_mw: 10.0 # !! ADJUST !!
-  import_cost_eur_per_mwh: 50.0 # !! ADJUST !!
-  export_price_eur_per_mwh: 20.0 # !! ADJUST !!
+  capacity_mw: 10.0 #
+  import_cost_eur_per_mwh: 50.0
+  export_price_eur_per_mwh: 20.0 
   transformer_efficiency: 0.98
 
 # Baseline Assets
 baseline_pv:
-  capacity_kw: 50.0 # !! ADJUST based on existing PV !!
-  # Profile loaded from data/input/timeseries/solar_pv_generation.csv
+  capacity_kw: 15.0
   marginal_cost: 0
 
-baseline_heat_source:
-  type: gas_boiler # or 'district_heating_import' - !! ADJUST !!
-  capacity_mw_th: 5.0 # !! ADJUST !!
-  cost_eur_per_mwh_th: 40.0 # !! ADJUST !!
-  efficiency_if_boiler: 0.9 # Not used if DH import
+#baseline_heat_source:
+ # type: gas_boiler # or 'district_heating_import' 
+  #capacity_mw_th: 0.05
+  #cost_eur_per_mwh_th: 50.0 
+  #efficiency_if_boiler: 0.9 # Not used if DH import
 
-# Placeholder load parameters (adjust or define in main config if preferred)
-loads:
-  stadium_elec_peak_mw: 0.5 # !! ADJUST !!
-  stadium_heat_peak_mw: 0.8 # !! ADJUST !!
-  pool_elec_peak_mw: 0.3 # !! ADJUST !!
-  pool_heat_peak_mw: 1.0 # !! ADJUST !! Pool heat might be constant
-  general_elec_peak_mw: 1.5 # !! ADJUST !!
-  general_heat_peak_mw: 2.0 # !! ADJUST !!
+# Placeholder load parameters
+social_building:
+  electricity_load_profile: Social_Building_Loads.csv
+  pv_generation_profile: Solar_PV_Generation.csv
+  heat_demand_profile: Social_Building_Loads.csv
+  heat_source: boiler
+  #in the future I can add heat_source: district_heating
 
 # Add sections for other components used in different scenarios:
 # battery_storage:
