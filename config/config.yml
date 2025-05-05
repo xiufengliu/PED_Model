@@ -9,6 +9,10 @@ scenarios:
     # Scenario-specific settings could go here if needed
     output_subdir: "scenario_baseline" # Subdirectory for results
 
+  high_pv:
+    description: "Maximized solar PV deployment on available surfaces within the district."
+    output_subdir: "scenario_high_pv" # Subdirectory for results
+
 simulation_settings:
   solver: highs # Default solver (ensure it's installed)
   solver_options: {}

@@ -1,14 +1,19 @@
-# scripts/main.py
+#!/usr/bin/env python3
 """
 Main script to run Lyngby PED Scenario simulations.
 """
 import pypsa
 import pandas as pd
 import os
-import argparse # For command-line arguments
+import argparse
 import yaml
-from build_ped_network import create_baseline_network # Import baseline function
-# Import functions for other scenarios later (e.g., from build_scenario_X.py)
+import sys
+
+# Add the project root directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import the scenarios package
+from scenarios import get_scenario_function
 
 def run_scenario(scenario_name, config_file, params_file):
     """Runs the specified scenario."""
@@ -32,14 +37,14 @@ def run_scenario(scenario_name, config_file, params_file):
     print(f"Output directory: {OUTPUT_PATH}")
 
     # --- Build Network ---
-    # Select the correct network building function based on scenario
-    # Add more build functions later (e.g., create_pv_storage_network)
-    if scenario_name == 'baseline':
-        network = create_baseline_network(config_file, params_file, DATA_PATH)
-    # elif scenario_name == 'high_pv':
-        # network = create_high_pv_network(config_file, params_file, DATA_PATH) # Example
-    else:
-        print(f"Error: Network build function for scenario '{scenario_name}' not defined.")
+    try:
+        # Get the appropriate scenario function
+        create_network = get_scenario_function(scenario_name)
+
+        # Build the network
+        network = create_network(config_file, params_file, DATA_PATH)
+    except Exception as e:
+        print(f"Error building network for scenario '{scenario_name}': {e}")
         return
 
     # --- Run Simulation / Optimization ---
@@ -93,9 +98,19 @@ def run_scenario(scenario_name, config_file, params_file):
         heat_series = network.generators_t.p.get('Heat Source', pd.Series(0.0, index=network.snapshots))
         total_heat_produced = heat_series.sum() * hours_in_period # MWh_th
 
-        # PV Production
-        pv_series = network.generators_t.p.get('Existing PV', pd.Series(0.0, index=network.snapshots))
-        total_pv_produced = pv_series.sum() * hours_in_period # MWh
+        # PV Production - Handle both baseline and high_pv scenarios
+        total_pv_produced = 0
+
+        # Check for baseline PV
+        if 'Existing PV' in network.generators_t.p:
+            pv_series = network.generators_t.p['Existing PV']
+            total_pv_produced += pv_series.sum() * hours_in_period # MWh
+
+        # Check for high_pv scenario PV installations
+        for pv_name in ['Stadium PV', 'Pool PV', 'General PV']:
+            if pv_name in network.generators_t.p:
+                pv_series = network.generators_t.p[pv_name]
+                total_pv_produced += pv_series.sum() * hours_in_period # MWh
 
         # Total Demand
         total_elec_demand = sum(network.loads_t.p_set[col].sum() for col in network.loads_t.p_set.columns if network.loads.loc[col].carrier == 'electricity') * hours_in_period
@@ -128,25 +143,39 @@ def run_scenario(scenario_name, config_file, params_file):
     print(f"--- Scenario {scenario_name} finished ---")
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the script."""
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Run PyPSA simulations for the Lyngby PED project.")
     parser.add_argument("-s", "--scenario", help="Name of the scenario to run (must match config.yml)", required=True)
     parser.add_argument("-c", "--config", help="Path to the main configuration file", default="config/config.yml")
     parser.add_argument("-p", "--params", help="Path to the component parameters file", default="config/component_params.yml")
+    parser.add_argument("-l", "--list", help="List available scenarios", action="store_true")
 
     args = parser.parse_args()
+
+    # List available scenarios if requested
+    if args.list:
+        from scenarios import SCENARIO_FUNCTIONS
+        print("Available scenarios:")
+        for scenario in SCENARIO_FUNCTIONS.keys():
+            print(f"  - {scenario}")
+        return
 
     # Basic validation
     if not os.path.exists(args.config):
         print(f"Error: Config file not found at {args.config}")
-        exit()
+        exit(1)
     if not os.path.exists(args.params):
         print(f"Error: Component parameters file not found at {args.params}")
-        exit()
+        exit(1)
 
     # Run the selected scenario
     run_scenario(args.scenario, args.config, args.params)
 
     print("\nMain script finished.")
+
+
+if __name__ == "__main__":
+    main()
 

@@ -14,6 +14,7 @@ Simulation model for the Positive Energy District concept in Lyngby, featuring c
     * `/data/output`: Simulation results (ignored by Git by default).
 * `/environment.yml`: Conda environment specification.
 * `/notebooks`: Jupyter notebooks for analysis, visualization, workflow steps.
+* `/scenarios`: Scenario implementations, each in its own module.
 * `/scripts`: Core Python scripts for the simulation model.
 * `/tests`: Optional directory for automated tests.
 
@@ -36,14 +37,36 @@ Simulation model for the Positive Energy District concept in Lyngby, featuring c
 
 The main script `scripts/main.py` is used to run simulations for specific scenarios defined in `config/config.yml`.
 
-Example command to run the 'baseline' scenario:
+Example commands:
 
 ```bash
+# List available scenarios
+python scripts/main.py --list
+
+# Run the baseline scenario
+python scripts/main.py --scenario baseline
+
+# Run the high PV scenario
+python scripts/main.py --scenario high_pv
+
+# Run with custom config and params files
 python scripts/main.py --scenario baseline --config config/config.yml --params config/component_params.yml
 ```
 
-* Replace `baseline` with the desired scenario name (see list below).
 * The `--config` and `--params` arguments default to the standard file paths but can be overridden.
+
+### Creating New Scenarios
+
+You can create a new scenario using the provided script:
+
+```bash
+python scripts/create_scenario.py pv_battery "Combines high PV penetration with electrical battery storage"
+```
+
+This will:
+1. Create a new scenario file in the `scenarios` directory
+2. Update the necessary configuration files
+3. Provide guidance on next steps to implement your scenario
 
 ## Simulation Scenarios
 
@@ -81,7 +104,7 @@ The following scenarios are defined or suggested for analysis (scenario names us
     * **Description:** Allows the model to determine the optimal capacities of PV, batteries, thermal storage, etc., by minimizing total system costs (operational + annualized investment) over the project lifetime.
     * **Purpose:** Identify the most cost-effective mix and sizing of technologies from an investment perspective.
 
-*Modify `config/config.yml` and `config/component_params.yml` to reflect the specific parameters for each scenario you wish to run. You may need to create additional Python functions in `scripts/` to build the network for more complex scenarios.*
+*Currently, only the `baseline` and `high_pv` scenarios are fully implemented. Use the scenario creation script and follow the modular structure to implement additional scenarios.*
 
 ## Contributing
 
@@ -94,4 +117,3 @@ The following scenarios are defined or suggested for analysis (scenario names us
 ## Contact
 
 [Your Name/Organization and contact information.]
-```

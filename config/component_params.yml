@@ -29,6 +29,18 @@ loads:
   general_elec_peak_mw: 1.5 # !! ADJUST !!
   general_heat_peak_mw: 2.0 # !! ADJUST !!
 
+# High PV Scenario Assets
+high_pv:
+  # Stadium rooftop PV
+  stadium_pv_capacity_kw: 200.0  # Assuming 200 kW of PV on stadium roof
+  # Swimming pool rooftop PV
+  pool_pv_capacity_kw: 150.0     # Assuming 150 kW of PV on pool roof
+  # General district PV (e.g., on other buildings, carports)
+  general_pv_capacity_kw: 300.0  # Assuming 300 kW of PV on other surfaces
+  # All PV installations use the same generation profile
+  # Profile loaded from data/input/timeseries/solar_pv_generation.csv
+  marginal_cost: 0
+
 # Add sections for other components used in different scenarios:
 # battery_storage:
 #   charge_efficiency: 0.95
