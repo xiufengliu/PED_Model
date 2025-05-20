@@ -1,0 +1,45 @@
+# config/component_params.yml
+# Parameters for components used across scenarios, unless overridden
+
+# Grid Connection Parameters
+grid:
+  capacity_mw: 10.0
+  import_cost_eur_per_mwh: variable  # Using variable electricity prices from grid_prices.csv
+  price_profile: grid_prices.csv  # File containing hourly electricity prices
+  export_price_eur_per_mwh: 20.0
+  transformer_efficiency: 0.98
+
+# Baseline Assets
+baseline_pv:
+  capacity_kw: 15.0  # Small existing PV installation on the social building
+  marginal_cost: 0
+
+baseline_heat_source:
+  type: gas_boiler # or 'district_heating_import'
+  capacity_mw_th: 2.0  # Increased capacity to ensure it's sufficient for maximum heat demand
+  cost_eur_per_mwh_th: 40.0  # Realistic gas cost in Denmark
+  efficiency_if_boiler: 0.9 # Not used if DH import
+
+# Placeholder load parameters
+social_building:
+  electricity_load_profile: electricity_demand.csv
+  pv_generation_profile: solar_pv_generation.csv
+  heat_demand_profile: heat_demand.csv
+  heat_source: boiler
+  num_apartments: 165  # Social building with 165 apartments
+  #in the future I can add heat_source: district_heating
+
+# Add sections for other components used in different scenarios:
+# battery_storage:
+#   charge_efficiency: 0.95
+#   discharge_efficiency: 0.95
+#   capital_cost_eur_per_kw: 300 # For investment optimisation
+#   capital_cost_eur_per_kwh: 150 # For investment optimisation
+
+# thermal_storage:
+#   loss_rate_percent_per_hour: 0.1
+#   capital_cost_eur_per_kwh: 10 # For investment optimisation
+
+# heat_pump:
+#   efficiency_cop: 3.5 # Coefficient of Performance
+#   capital_cost_eur_per_kw_th: 400 # For investment optimisation
