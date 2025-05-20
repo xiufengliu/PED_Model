@@ -1,14 +1,19 @@
 Metric,Value
 Number of Apartments,165.0
 Total Electricity Demand (MWh/year),1046.54
-Total Heat Demand (MWh/year),1074.9947746804864
-Total PV Generation (MWh/year),73.42202380952381
-Total Grid Import (MWh/year),973.117976190476
+Total Heat Demand (MWh/year),1074.99
+Total PV Generation (MWh/year),73.42
+Total Grid Import (MWh/year),973.12
 Total Grid Export (MWh/year),0.0
-Average Electricity Price (EUR/MWh),70.78237671232877
-Electricity Import Cost (EUR/year),74321.44569959922
+Average Electricity Price (EUR/MWh),70.78
+Average Thermal Energy Price (EUR/MWh),69.91
+Electricity Import Cost (EUR/year),74321.45
 Electricity Export Revenue (EUR/year),0.0
-Heat Cost (EUR/year),47777.54554135496
-Total Energy Cost (EUR/year),122098.99124095417
+Heat Cost (EUR/year),100599.45
+Total Energy Cost (EUR/year),174920.90
 PV Self-Consumption (%),100.0
-Electricity Self-Sufficiency (%),7.015692071924991
+Electricity Self-Sufficiency (%),7.02
+Grid Import CO2 Emissions (tonnes CO2/year),267.61
+Heat CO2 Emissions (tonnes CO2/year),262.78
+Total CO2 Emissions (tonnes CO2/year),530.38
+CO2 Emissions per Apartment (tonnes CO2/apartment/year),3.21
