@@ -4,8 +4,8 @@ This package contains the different scenario implementations for the PED Lyngby 
 
 ## Available Scenarios
 
-1. **baseline**: Reference case with existing loads and minimal local assets.
-2. **high_pv**: Maximized solar PV deployment on available surfaces within the district.
+1. **baseline**: Reference case with existing loads and minimal local assets. Uses variable electricity prices from `grid_prices.csv` instead of a fixed import cost.
+2. **high_pv**: Maximized solar PV deployment on available surfaces within the district. Also uses variable electricity prices.
 
 ## Adding New Scenarios
 
@@ -47,3 +47,49 @@ To add a new scenario:
    ```
 4. Use descriptive names for components to make results analysis easier
 5. Document the key differences from the baseline scenario in the module docstring
+
+## Variable Electricity Prices
+
+The model uses variable electricity prices from the file `grid_prices.csv` instead of a fixed import cost. This is configured in the `component_params.yml` file:
+
+```yaml
+grid:
+  capacity_mw: 10.0
+  import_cost_eur_per_mwh: variable  # Using variable electricity prices from grid_prices.csv
+  price_profile: grid_prices.csv  # File containing hourly electricity prices
+  export_price_eur_per_mwh: 20.0
+  transformer_efficiency: 0.98
+```
+
+The variable prices are loaded in the `utils.py` file using the `load_electricity_price_profile` function:
+
+```python
+def load_electricity_price_profile(data_dir, index):
+    """
+    Load electricity price profile from CSV file.
+    """
+    filepath = os.path.join(data_dir, 'timeseries', 'grid_prices.csv')
+    try:
+        price_df = pd.read_csv(filepath, index_col=0, parse_dates=True)
+        price_profile = price_df.iloc[:, 0].reindex(index).fillna(50.0)
+        return price_profile
+    except FileNotFoundError:
+        print(f"Warning: Electricity price file not found '{filepath}'. Using default constant price.")
+        return pd.Series(50.0, index=index)  # Default price: 50 EUR/MWh
+```
+
+These prices are then used as the marginal cost for the grid generator in the `setup_basic_network` function:
+
+```python
+network.add("Generator", "Grid",
+            bus="Grid Connection",
+            carrier="electricity",
+            marginal_cost=price_profile,  # Use variable price profile
+            p_nom=grid_capacity,
+            p_nom_extendable=True,
+            p_nom_max=20.0,
+            p_min_pu=-1,
+            p_max_pu=1)
+```
+
+This allows the model to account for the time-varying nature of electricity prices, which is important for realistic economic analysis.

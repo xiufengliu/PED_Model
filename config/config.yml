@@ -19,7 +19,7 @@ simulation_settings:
     # e.g., mipgap: 0.01
   # Time period details (ensure these match your data)
   start_date: "2025-01-01"
-  num_hours: 72 # Example duration - CHANGE THIS
+  num_hours: 8760 # Full year simulation
 
 # Paths (relative to project root)
 paths:

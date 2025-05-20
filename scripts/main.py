@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Main script to run Lyngby PED Scenario simulations.
+Main script to run Social Building PED Scenario simulations.
 """
 import pypsa
 import pandas as pd
@@ -41,8 +41,21 @@ def run_scenario(scenario_name, config_file, params_file):
         # Get the appropriate scenario function
         create_network = get_scenario_function(scenario_name)
 
-        # Build the network
-        network = create_network(config_file, params_file, DATA_PATH)
+        # Force the use of 8760 hours
+        with open(config_file, 'r') as f:
+            config_data = yaml.safe_load(f)
+        config_data['simulation_settings']['num_hours'] = 8760
+
+        # Create a temporary config file with the updated settings
+        temp_config_file = os.path.join(os.path.dirname(config_file), 'temp_config.yml')
+        with open(temp_config_file, 'w') as f:
+            yaml.dump(config_data, f)
+
+        # Build the network with the temporary config file
+        network = create_network(temp_config_file, params_file, DATA_PATH)
+
+        # Remove the temporary config file
+        os.remove(temp_config_file)
     except Exception as e:
         print(f"Error building network for scenario '{scenario_name}': {e}")
         return
@@ -54,8 +67,26 @@ def run_scenario(scenario_name, config_file, params_file):
 
     try:
         print(f"Attempting LOPF using solver: {solver_name}...")
-        network.lopf(solver_name=solver_name, solver_options=solver_options)
-        print(f"LOPF completed successfully using {solver_name}.")
+
+        # For PyPSA >= 0.34.0, we need to use linopy
+        import pypsa
+
+        # Create optimization model and solve it
+        network.optimize(solver_name=solver_name, solver_options=solver_options)
+
+        # No need to extract results, they are already in the network
+        status = "ok"
+        termination_condition = "optimal"
+
+        if termination_condition == "optimal":
+            print(f"LOPF completed successfully using {solver_name}.")
+
+            # Results are already extracted to the network
+            pass
+        else:
+            print(f"LOPF failed with status: {status}, termination condition: {termination_condition}")
+            print("Simulation aborted.")
+            return # Stop processing this scenario
 
     except Exception as e:
          print(f"LOPF failed: {e}")
@@ -98,19 +129,13 @@ def run_scenario(scenario_name, config_file, params_file):
         heat_series = network.generators_t.p.get('Heat Source', pd.Series(0.0, index=network.snapshots))
         total_heat_produced = heat_series.sum() * hours_in_period # MWh_th
 
-        # PV Production - Handle both baseline and high_pv scenarios
+        # PV Production
         total_pv_produced = 0
 
         # Check for baseline PV
         if 'Existing PV' in network.generators_t.p:
             pv_series = network.generators_t.p['Existing PV']
             total_pv_produced += pv_series.sum() * hours_in_period # MWh
-
-        # Check for high_pv scenario PV installations
-        for pv_name in ['Stadium PV', 'Pool PV', 'General PV']:
-            if pv_name in network.generators_t.p:
-                pv_series = network.generators_t.p[pv_name]
-                total_pv_produced += pv_series.sum() * hours_in_period # MWh
 
         # Total Demand
         total_elec_demand = sum(network.loads_t.p_set[col].sum() for col in network.loads_t.p_set.columns if network.loads.loc[col].carrier == 'electricity') * hours_in_period
@@ -146,7 +171,7 @@ def run_scenario(scenario_name, config_file, params_file):
 def main():
     """Main entry point for the script."""
     # Set up argument parser
-    parser = argparse.ArgumentParser(description="Run PyPSA simulations for the Lyngby PED project.")
+    parser = argparse.ArgumentParser(description="Run PyPSA simulations for the Social Building PED project.")
     parser.add_argument("-s", "--scenario", help="Name of the scenario to run (must match config.yml)", required=True)
     parser.add_argument("-c", "--config", help="Path to the main configuration file", default="config/config.yml")
     parser.add_argument("-p", "--params", help="Path to the component parameters file", default="config/component_params.yml")
