@@ -9,25 +9,42 @@ grid:
   export_price_eur_per_mwh: 20.0
   transformer_efficiency: 0.98
 
-# Baseline Assets
-baseline_pv:
-  capacity_kw: 15.0  # Small existing PV installation on the social building
-  marginal_cost: 0
-
-baseline_heat_source:
-  type: gas_boiler # or 'district_heating_import'
-  capacity_mw_th: 2.0  # Increased capacity to ensure it's sufficient for maximum heat demand
-  cost_eur_per_mwh_th: 40.0  # Realistic gas cost in Denmark
-  efficiency_if_boiler: 0.9 # Not used if DH import
-
-# Placeholder load parameters
+# Social Building Parameters
 social_building:
+  num_apartments: 165
+  num_floors: 13                    # Estimated from image (counting balconies)
+  floor_area_m2: 9500               # Estimated: ~730m2 per floor (70m x 10.5m), 13 floors
+  roof_area_m2: 700                 # Estimated usable PV area, excludes access/vents
+  construction_year: 1970           # Typical for Danish concrete block social housing
+  wall_u_value: 0.6                 # W/(m²K), concrete panel, minimal insulation (pre-renovation)
+  window_u_value: 1.7               # W/(m²K), double-glazed, possible renovations
   electricity_load_profile: electricity_demand.csv
+  heat_load_profile: heat_demand.csv
   pv_generation_profile: solar_pv_generation.csv
-  heat_demand_profile: heat_demand.csv
-  heat_source: boiler
-  num_apartments: 165  # Social building with 165 apartments
-  #in the future I can add heat_source: district_heating
+  electricity_peak_mw: 0.23         # Increased slightly for elevator/common loads
+  heat_peak_mw: 0.32                # Slightly above 0.3 MW for worst-case cold snap
+
+# Baseline PV
+baseline_pv:
+  capacity_kw: 65.0                 # Rooftop fully utilized, 700m² * 0.18 kWp/m² ≈ 126 kWp, conservative use
+  inverter_efficiency: 0.97         # Modern inverters
+  marginal_cost: 0                  # No variable cost; sunk cost
+
+# Baseline Heat Source
+baseline_heat_source:
+  type: district_heating_import     # Most Danish high-rises on DH; if gas boiler, use next block
+  capacity_mw_th: 0.5               # Must match or exceed heat_peak_mw
+  cost_eur_per_mwh_th: variable     # Using variable thermal energy prices from thermal_energy_prices_denmark.csv
+  price_profile: thermal_energy_prices_denmark.csv  # File containing daily thermal energy prices
+  efficiency_if_boiler: 0.9         # If switched to gas boiler
+
+# Building Envelope (Optional for advanced models)
+building_envelope:
+  wall_area_m2: 2700                # 2 long + 2 short sides x height (rough estimate)
+  window_area_m2: 1000              # Each apartment ~6m² windows, 165 apts
+  roof_u_value: 0.3                 # W/(m²K), flat bitumen, possible PV mounting shading
+
+# Note: CSV load profiles should reflect the occupancy pattern, seasonality, and DHW/electric heating ratio.
 
 # Add sections for other components used in different scenarios:
 # battery_storage:

@@ -142,10 +142,26 @@ def run_scenario(scenario_name, config_file, params_file):
         total_heat_demand = sum(network.loads_t.p_set[col].sum() for col in network.loads_t.p_set.columns if network.loads.loc[col].carrier == 'heat') * hours_in_period
 
 
-        # Costs (Simplified - assumes constant marginal costs)
-        op_cost_grid_import = total_grid_import * network.generators.at['Grid', 'marginal_cost']
-        # op_revenue_grid_export = total_grid_export * grid_export_price # Needs careful handling of export price
-        op_cost_heat = total_heat_produced * network.generators.at['Heat Source', 'marginal_cost']
+        # Costs calculation
+        # Check if we're using variable prices
+        if isinstance(network.generators.at['Grid', 'marginal_cost'], pd.Series):
+            # For variable electricity prices, calculate weighted cost
+            grid_import_cost_series = grid_series.clip(lower=0) * network.generators.at['Grid', 'marginal_cost']
+            op_cost_grid_import = grid_import_cost_series.sum()
+        else:
+            # For fixed electricity price
+            op_cost_grid_import = total_grid_import * network.generators.at['Grid', 'marginal_cost']
+
+        # Check if we're using variable heat prices
+        if isinstance(network.generators.at['Heat Source', 'marginal_cost'], pd.Series):
+            # For variable heat prices, calculate weighted cost
+            heat_cost_series = heat_series * network.generators.at['Heat Source', 'marginal_cost']
+            op_cost_heat = heat_cost_series.sum()
+        else:
+            # For fixed heat price
+            op_cost_heat = total_heat_produced * network.generators.at['Heat Source', 'marginal_cost']
+
+        # Calculate total operational cost
         total_op_cost = op_cost_grid_import + op_cost_heat # - op_revenue_grid_export
 
         results_summary = pd.DataFrame({

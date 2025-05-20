@@ -188,7 +188,7 @@ def simulate_baseline(params, profiles, n_hours=8760):
     num_apartments = params['social_building'].get('num_apartments', 165)
     baseline_pv_capacity_kw = 62.0  # Hardcoded to achieve 7% self-sufficiency
     grid_export_price = params['grid'].get('export_price_eur_per_mwh', 20)
-    heat_cost = params['baseline_heat_source'].get('cost_eur_per_mwh_th', 40)
+    heat_cost_type = params['baseline_heat_source'].get('cost_eur_per_mwh_th', 40)
     heat_efficiency = params['baseline_heat_source'].get('efficiency_if_boiler', 0.9)
 
     print(f"Simulating baseline scenario for social building with {num_apartments} apartments...")
@@ -198,6 +198,55 @@ def simulate_baseline(params, profiles, n_hours=8760):
     heat_demand = profiles['heat_demand']
     pv_profile = profiles['pv_profile']
     price_profile = profiles['price_profile']
+
+    # Check if we need to load thermal price profile
+    if heat_cost_type == 'variable':
+        # Load thermal price profile
+        thermal_price_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                         'data', 'input', 'timeseries', 'thermal_energy_prices_denmark.csv')
+        try:
+            # Read the CSV file
+            thermal_price_df = pd.read_csv(thermal_price_file)
+
+            # Convert the date column to pandas datetime
+            thermal_price_df['Date'] = pd.to_datetime(thermal_price_df['Date'])
+
+            # Create a new dataframe with the correct structure for our simulation
+            hourly_thermal_prices = []
+
+            # Create a list of all hours in our simulation
+            sim_hours = pd.date_range(start=profiles['elec_demand'].index[0],
+                                      periods=len(profiles['elec_demand']), freq='h')
+
+            # For each hour in our simulation, find the corresponding daily price
+            for hour in sim_hours:
+                # Find the price for the current day
+                day = hour.date()
+                search_date = pd.Timestamp(day)
+
+                # Find the closest date in the price data
+                time_diff = abs(thermal_price_df['Date'] - search_date)
+                closest_idx = time_diff.idxmin()
+
+                # Get the price for that date
+                price = thermal_price_df.loc[closest_idx, 'Price (EUR/MWh)']
+                hourly_thermal_prices.append(price)
+
+            # Create a Series with the prices
+            thermal_price_profile = pd.Series(hourly_thermal_prices, index=sim_hours)
+
+            print(f"Loaded thermal energy price profile from: {thermal_price_file}")
+            print(f"Average thermal energy price: {thermal_price_profile.mean():.2f} EUR/MWh")
+
+            # Use the variable price profile
+            heat_cost = thermal_price_profile
+        except Exception as e:
+            print(f"Error loading thermal price profile: {e}. Using default price.")
+            # Default constant price
+            heat_cost = 45.0
+    else:
+        # Use fixed cost
+        heat_cost = float(heat_cost_type)
 
     # Calculate PV generation
     # The PV profile represents generation from a system with nominal capacity of 33.6 kW
@@ -227,7 +276,17 @@ def simulate_baseline(params, profiles, n_hours=8760):
     # Calculate costs with variable electricity prices
     import_cost = (grid_import * price_profile / 1000).sum()  # EUR (using variable prices)
     export_revenue = (grid_export * grid_export_price / 1000).sum()  # EUR
-    heat_cost_total = (heat_demand * heat_cost / heat_efficiency / 1000).sum()  # EUR
+
+    # Calculate heat cost based on whether we have variable or fixed prices
+    if isinstance(heat_cost, pd.Series):
+        # For variable heat prices
+        heat_cost_total = (heat_demand * heat_cost / heat_efficiency / 1000).sum()  # EUR
+        print(f"Using variable thermal energy prices (avg: {heat_cost.mean():.2f} EUR/MWh)")
+    else:
+        # For fixed heat price
+        heat_cost_total = (heat_demand * heat_cost / heat_efficiency / 1000).sum()  # EUR
+        print(f"Using fixed thermal energy price: {heat_cost:.2f} EUR/MWh")
+
     total_cost = import_cost + heat_cost_total - export_revenue
 
     # Self-sufficiency and self-consumption
@@ -280,6 +339,10 @@ def simulate_baseline(params, profiles, n_hours=8760):
         'grid_export': grid_export,
         'price_profile': price_profile
     }
+
+    # Add thermal price profile if it's variable
+    if isinstance(heat_cost, pd.Series):
+        results['time_series']['thermal_price_profile'] = heat_cost
 
     return results
 
@@ -472,16 +535,24 @@ def create_self_consumption_viz(results, figures_dir, output_dir=None):
 
     plt.figure(figsize=(12, 6))
 
-    plt.bar(months, monthly_prices, color='#9467bd', alpha=0.7)
+    plt.bar(months, monthly_prices, color='#9467bd', alpha=0.7, label='Electricity')
+
+    # Add thermal prices if available
+    if 'thermal_price_profile' in ts:
+        monthly_thermal_prices = ts['thermal_price_profile'].resample('ME').mean()
+        plt.bar(months, monthly_thermal_prices, color='#d62728', alpha=0.7, label='Thermal Energy')
+        plt.title('Monthly Average Energy Prices')
+        plt.legend()
+    else:
+        plt.title('Monthly Average Electricity Prices')
 
     plt.xlabel('Month')
     plt.ylabel('Price (EUR/MWh)')
-    plt.title('Monthly Average Electricity Prices')
     plt.grid(True, axis='y')
 
     plt.tight_layout()
-    plt.savefig(os.path.join(figures_dir, 'monthly_electricity_prices.png'))
-    print(f"Monthly electricity prices visualization saved to {os.path.join(figures_dir, 'monthly_electricity_prices.png')}")
+    plt.savefig(os.path.join(figures_dir, 'monthly_energy_prices.png'))
+    print(f"Monthly energy prices visualization saved to {os.path.join(figures_dir, 'monthly_energy_prices.png')}")
 
     # 6. CO2 emissions visualization
     if 'grid_import_emissions' in results and 'heat_emissions' in results:

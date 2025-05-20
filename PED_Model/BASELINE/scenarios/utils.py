@@ -89,6 +89,40 @@ def load_electricity_price_profile(data_dir, index):
         print(f"Error loading electricity price profile from '{filepath}': {e}. Using default constant price.")
         return pd.Series(50.0, index=index)  # Default price: 50 EUR/MWh
 
+def load_thermal_price_profile(data_dir, index):
+    """
+    Load thermal energy price profile from CSV file.
+
+    Args:
+        data_dir (str): Path to the data directory
+        index (pd.DatetimeIndex): Index for the time series
+
+    Returns:
+        pd.Series: Thermal energy price profile indexed by snapshots
+    """
+    filepath = os.path.join(data_dir, 'timeseries', 'thermal_energy_prices_denmark.csv')
+    try:
+        # Load the price profile from the CSV file
+        price_df = pd.read_csv(filepath, index_col=0, parse_dates=True)
+        # Select the relevant column and time slice
+        # Note: Thermal prices are daily, so we need to resample to match the hourly index
+        daily_prices = price_df['Price (EUR/MWh)']
+        # Create a Series with the daily prices
+        daily_price_series = pd.Series(daily_prices.values, index=price_df.index)
+        # Resample to hourly frequency using forward fill (each hour in a day gets the same price)
+        hourly_price_series = daily_price_series.resample('H').ffill()
+        # Reindex to match the simulation timeframe
+        price_profile = hourly_price_series.reindex(index).fillna(45.0) # Fill gaps with default price
+        print(f"Loaded thermal energy price profile from: {filepath}")
+        print(f"Average thermal energy price: {price_profile.mean():.2f} EUR/MWh")
+        return price_profile
+    except FileNotFoundError:
+        print(f"Warning: Thermal energy price file not found '{filepath}'. Using default constant price.")
+        return pd.Series(45.0, index=index)  # Default price: 45 EUR/MWh
+    except Exception as e:
+        print(f"Error loading thermal energy price profile from '{filepath}': {e}. Using default constant price.")
+        return pd.Series(45.0, index=index)  # Default price: 45 EUR/MWh
+
 def setup_basic_network(config, params, data_path):
     """
     Set up a basic PyPSA network with common elements used across scenarios.
@@ -160,21 +194,41 @@ def setup_basic_network(config, params, data_path):
     # Add heat source
     heat_source_params = params.get('baseline_heat_source', {})
     heat_source_capacity_mw = heat_source_params.get('capacity_mw_th', 1.0)
-    heat_source_cost = heat_source_params.get('cost_eur_per_mwh_th', 40)
+    heat_source_cost_type = heat_source_params.get('cost_eur_per_mwh_th', 40)
     heat_source_type = heat_source_params.get('type', 'gas_boiler')
     heat_source_efficiency = heat_source_params.get('efficiency_if_boiler', 0.9)
+
+    # Check if we're using variable thermal energy prices
+    if heat_source_cost_type == 'variable':
+        # Load variable thermal energy price profile
+        thermal_price_profile = load_thermal_price_profile(data_path, network.snapshots)
+        # Calculate average price for display purposes
+        avg_thermal_price = thermal_price_profile.mean()
+        heat_source_cost = thermal_price_profile
+        cost_display = f"Variable (avg={avg_thermal_price:.2f})"
+    else:
+        # Use fixed cost
+        heat_source_cost = float(heat_source_cost_type)
+        cost_display = f"{heat_source_cost}"
 
     if heat_source_capacity_mw > 0:
         if heat_source_type == 'gas_boiler':
             # For gas boiler, we add a Generator with higher capacity to ensure feasibility
+            if isinstance(heat_source_cost, pd.Series):
+                # For variable costs, divide each hourly price by efficiency
+                marginal_cost = heat_source_cost / heat_source_efficiency
+            else:
+                # For fixed cost, divide the single value by efficiency
+                marginal_cost = heat_source_cost / heat_source_efficiency
+
             network.add("Generator", "Heat Source",
                         bus="District Heat Source",
                         carrier="heat",
                         p_nom=heat_source_capacity_mw,
                         p_nom_extendable=True,  # Allow capacity to be extended if needed
                         p_nom_max=10.0,  # Maximum capacity (very high to ensure feasibility)
-                        marginal_cost=heat_source_cost / heat_source_efficiency)
-            print(f"Added Gas Boiler: Capacity={heat_source_capacity_mw} MWth (extendable), Cost={heat_source_cost} EUR/MWh, Efficiency={heat_source_efficiency}")
+                        marginal_cost=marginal_cost)
+            print(f"Added Gas Boiler: Capacity={heat_source_capacity_mw} MWth (extendable), Cost={cost_display} EUR/MWh, Efficiency={heat_source_efficiency}")
         else:
             # For district heating import, we just add a generator
             network.add("Generator", "Heat Source",
@@ -184,7 +238,7 @@ def setup_basic_network(config, params, data_path):
                         p_nom_extendable=True,  # Allow capacity to be extended if needed
                         p_nom_max=10.0,  # Maximum capacity (very high to ensure feasibility)
                         marginal_cost=heat_source_cost)
-            print(f"Added District Heating Import: Capacity={heat_source_capacity_mw} MWth (extendable), Cost={heat_source_cost} EUR/MWh")
+            print(f"Added District Heating Import: Capacity={heat_source_capacity_mw} MWth (extendable), Cost={cost_display} EUR/MWh")
     else:
          print("No Heat Source capacity specified.")
 
