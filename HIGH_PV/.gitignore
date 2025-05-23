@@ -1,0 +1,97 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.spyderproject
+.spyproject
+.ropeproject
+/site
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# --- Jupyter Notebook ---
+.ipynb_checkpoints
+*.nbconvert.ipynb
+
+# --- PyPSA / Simulation Specific ---
+# Output data directory (contains results, often large)
+data/output/
+
+# Temporary solver logs or files (adjust patterns if needed)
+*.log
+*.lp
+*.sol
+# temp_network.nc
+
+# --- OS / IDE Specific ---
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+*~
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Sensitive Data ---
+*.env
+secrets.yml
+credentials.json
+
+# --- Large Data Files (Consider Git LFS or external storage) ---
+# data/input/large_input_file.csv

@@ -1,0 +1,18 @@
+Metric,Value
+Total Electricity Demand,1046.54 MWh/year
+Total Heat Demand,1074.99 MWh/year
+Total PV Generation,159.36 MWh/year
+Total Grid Import,866.11 MWh/year
+Total Grid Export,0.00 MWh/year
+Total Heat Production,1467.99 MWh/year
+Average Electricity Price,70.78 EUR/MWh
+Average Thermal Energy Price,69.73 EUR/MWh
+Total Electricity Cost,61303.42 EUR/year
+Total Heat Cost,102363.22 EUR/year
+Total Energy Cost,163666.64 EUR/year
+PV Self-Consumption,100.00%
+Electricity Self-Sufficiency,15.23%
+Grid Import CO2 Emissions,240.59 tonnes CO2/year
+Heat CO2 Emissions,262.78 tonnes CO2/year
+Total CO2 Emissions,503.36 tonnes CO2/year
+CO2 Emissions per Apartment,3.05 tonnes CO2/apartment/year

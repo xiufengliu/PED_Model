@@ -1,0 +1,2 @@
+Scenario,Total Grid Import (MWh),Total Grid Export (MWh),Total Heat Produced (MWh_th),Total PV Produced (MWh),Total Elec Demand (MWh),Total Heat Demand (MWh_th),Total Operational Cost (EUR)
+baseline,963.2845935510373,-0.0,1467.99390776596,64.1311737565145,0,0,170544.49872006284
