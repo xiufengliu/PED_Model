@@ -1,0 +1,36 @@
+# Conda environment for PED_Lyngby_Model
+# To create: conda env create -f environment.yml
+# To activate: conda activate PED_Lyngby_Model
+name: PED_Lyngby_Model
+channels:
+  - conda-forge
+dependencies:
+  # Core requirement
+  - python>=3.9 # Specify your desired Python version
+  - pypsa>=0.25 # Specify required PyPSA version
+  # Data handling
+  - pandas>=1.5
+  - numpy>=1.20
+  - scipy
+  - xarray # Often needed for netCDF export/import
+  - netcdf4 # Engine for xarray
+  # Plotting
+  - matplotlib>=3.5
+  - cartopy # For map plotting (optional)
+  # Optimization Solvers (install at least one)
+  - highs # Good open-source LP/MIP solver
+  # - glpk # Another open-source option
+  # - cbc # Another open-source option (via coin-or)
+  # - ipopt # Open-source non-linear solver (for non-linear PF/OPF)
+  # Optional: Commercial solvers like gurobi, cplex, mosek need separate installation/licensing
+  # Jupyter environment (for notebooks)
+  - jupyterlab
+  - ipykernel
+  # Configuration file handling
+  - pyyaml
+  # Other useful libraries
+  # - geopandas # If doing geospatial analysis
+  # - seaborn # Advanced plotting
+  # - tqdm # Progress bars
+  # Add specific versions if needed for reproducibility
+  # Example: - pandas=1.5.3
