@@ -1,0 +1,455 @@
+#!/usr/bin/env python3
+"""
+Plotting utilities for the PED Lyngby Model.
+
+This module contains functions for visualizing the results of the PED Lyngby Model.
+"""
+
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib as mpl
+
+
+def setup_plotting_style():
+    """Set up the plotting style for consistent visualizations."""
+    try:
+        plt.style.use('seaborn-v0_8-whitegrid')
+    except (OSError, IOError):
+        plt.style.use('default')
+    mpl.rcParams['font.family']       = 'sans-serif'
+    mpl.rcParams['font.sans-serif']   = ['DejaVu Sans', 'Arial']
+    plt.rcParams['figure.figsize'] = (12, 8)
+    plt.rcParams['font.size'] = 12
+    plt.rcParams['axes.labelsize'] = 14
+    plt.rcParams['axes.titlesize'] = 16
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['figure.titlesize'] = 18
+
+
+def plot_energy_balance(results, scenario_name, output_dir=None):
+    """
+    Plot energy balance for a scenario.
+
+    Args:
+        results (dict): Dictionary with energy balance results
+        scenario_name (str): Name of the scenario
+        output_dir (str, optional): Directory to save the plot
+
+    Returns:
+        matplotlib.figure.Figure: The figure object
+    """
+    setup_plotting_style()
+
+    categories = ['PV Generation', 'Grid Import', 'Grid Export',
+                  'Electric Load', 'Thermal Load','CO₂ Emissions']
+    values = [
+        results.get('pv_generation_mwh', 0),
+        results.get('grid_import_mwh', 0),
+        results.get('grid_export_mwh', 0),
+        results.get('total_electric_load_mwh', 0),
+        results.get('total_thermal_load_mwh', 0),
+        results.get('co2_emissions_kg', 0)
+    ]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', "#000000"]
+    bars = ax.bar(categories, values, color=colors)
+
+    for bar in bars:
+        h = bar.get_height()
+        ax.annotate(f'{h:.1f}', xy=(bar.get_x() + bar.get_width()/2, h),
+                    xytext=(0, 3), textcoords="offset points",
+                    ha='center', va='bottom')
+
+    ax.set_ylabel('Energy (MWh)')
+    ax.set_title(f'Energy Balance - {scenario_name}')
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, f'{scenario_name}_energy_balance.png'),
+                    dpi=300, bbox_inches='tight')
+
+    return fig
+
+
+def plot_energy_balance_breakdown(results, scenario_name, output_dir=None):
+    """
+    Plot a 2x2 grid of bar charts:
+      1) PV Generation, Grid Import, Grid Export
+      2) Thermal Load, Electric Load
+      3) Heat import, Heat Pump Production, DSM Heat Charge, DSM Heat Dispatch
+      4) CO₂ Emissions Grid, CO₂ Emissions DH
+    """
+    setup_plotting_style()
+
+    groups = [
+        (['PV Generation', 'Grid Import', 'Grid Export'], 'Elettrico: PV & Rete'),
+        (['Thermal Load', 'Electric Load'], 'Domanda Energetica'),
+        (['Heat import', 'Heat Pump Production','DSM Heat Charge','DSM Heat Dispatch'], 'Flussi Termici'),
+        (['CO₂ Emissions Grid', 'CO₂ Emissions DH'], 'Emissioni CO₂')
+    ]
+
+    key_map = {
+        'PV Generation':            'pv_generation_mwh',
+        'Grid Import':              'grid_import_mwh',
+        'Grid Export':              'grid_export_mwh',
+        'Thermal Load':             'total_thermal_load_mwh',
+        'Electric Load':            'total_electric_load_mwh',
+        'Heat import':              'DH Import to Building (MWh_th)',
+        'Heat Pump Production':     'Heat Pump Production (MWh_th)',
+        'DSM Heat Charge':          'DSM Heat Charge (MWh_th)',
+        'DSM Heat Dispatch':        'DSM Heat Dispatch (MWh_th)',
+        'CO₂ Emissions Grid':       'co2_emissions_kg',
+        'CO₂ Emissions DH':         'dh_emissions_kg'
+    }
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    axes = axes.flatten()
+
+    colors = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a']
+    for ax, (labels, subtitle) in zip(axes, groups):
+        vals = [results.get(key_map[label], 0) for label in labels]
+        bars = ax.bar(labels, vals, color=colors[:len(labels)])
+        for bar in bars:
+            h = bar.get_height()
+            ax.annotate(f'{h:.1f}', xy=(bar.get_x() + bar.get_width()/2, h),
+                        xytext=(0, 3), textcoords="offset points",
+                        ha='center', va='bottom')
+        ax.set_title(subtitle)
+        ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    fig.suptitle(f'Energy Balance Breakdown - {scenario_name}', fontsize=18)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        fname = os.path.join(output_dir, f'{scenario_name}_energy_balance_breakdown.png')
+        plt.savefig(fname, dpi=300, bbox_inches='tight')
+
+    return fig
+
+
+def plot_time_series(time_series, scenario_name, output_dir=None):
+    """
+    Plot time series data for a scenario.
+    """
+    setup_plotting_style()
+
+    timestamps    = time_series.get('timestamps', pd.DatetimeIndex([]))
+    electric_load = time_series.get('electric_load', pd.Series(np.zeros(len(timestamps)), index=timestamps))
+    thermal_load  = time_series.get('thermal_load',  pd.Series(np.zeros(len(timestamps)), index=timestamps))
+    pv_generation = time_series.get('pv_generation', pd.Series(np.zeros(len(timestamps)), index=timestamps))
+    grid_import   = time_series.get('grid_import',   pd.Series(np.zeros(len(timestamps)), index=timestamps))
+    grid_export   = time_series.get('grid_export',   pd.Series(np.zeros(len(timestamps)), index=timestamps))
+
+    for serie, nome in zip(
+        [electric_load, thermal_load, pv_generation, grid_import, grid_export],
+        ['electric_load', 'thermal_load', 'pv_generation', 'grid_import', 'grid_export']):
+        if len(serie) != len(timestamps):
+            print(f"[ERRORE] La serie '{nome}' ha lunghezza {len(serie)} invece di {len(timestamps)}")
+
+    if any(len(serie) != len(timestamps) for serie in
+           [electric_load, thermal_load, pv_generation, grid_import, grid_export]):
+        print("[ERRORE FATALE] Le serie non sono coerenti in lunghezza, il plotting verrà saltato.")
+        return None
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+    ax.plot(timestamps, electric_load, label='Electric Load')
+    ax.plot(timestamps, thermal_load,  label='Thermal Load')
+    ax.plot(timestamps, pv_generation, label='PV Generation')
+    ax.plot(timestamps, grid_import,   label='Grid Import')
+    ax.plot(timestamps, grid_export,   label='Grid Export')
+    ax.legend()
+
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Power (MW)')
+    ax.set_title(f'Time Series - {scenario_name}')
+    ax.grid(True)
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    fig.autofmt_xdate()
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, f'{scenario_name}_time_series.png'),
+                    dpi=300, bbox_inches='tight')
+
+    return fig
+
+
+def plot_scenario_comparison(scenarios_results, metric, output_dir=None):
+    setup_plotting_style()
+    scenarios = list(scenarios_results.keys())
+    values = [scenarios_results[sc].get(metric, 0) for sc in scenarios]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.bar(scenarios, values, color='#2196F3')
+    for bar in bars:
+        h = bar.get_height()
+        ax.annotate(f'{h:.1f}', xy=(bar.get_x() + bar.get_width()/2, h),
+                    xytext=(0, 3), textcoords="offset points",
+                    ha='center', va='bottom')
+
+    ax.set_ylabel(metric)
+    ax.set_title(f'Scenario Comparison - {metric}')
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, f'scenario_comparison_{metric}.png'),
+                    dpi=300, bbox_inches='tight')
+
+    return fig
+
+
+def plot_heatmap(data, x_labels, y_labels, title, output_dir=None, filename=None):
+    setup_plotting_style()
+    fig, ax = plt.subplots(figsize=(12, 8))
+    cmap = LinearSegmentedColormap.from_list('custom_cmap',
+                                             ['#FFFFFF', '#E3F2FD', '#90CAF9', '#2196F3', '#1565C0'])
+    im = ax.imshow(data, cmap=cmap)
+    ax.figure.colorbar(im, ax=ax)
+
+    ax.set_xticks(np.arange(len(x_labels)))
+    ax.set_yticks(np.arange(len(y_labels)))
+    ax.set_xticklabels(x_labels)
+    ax.set_yticklabels(y_labels)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+    for i in range(len(y_labels)):
+        for j in range(len(x_labels)):
+            ax.text(j, i, f'{data[i, j]:.1f}', ha="center", va="center", color="black")
+
+    ax.set_title(title)
+    fig.tight_layout()
+
+    if output_dir and filename:
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, filename), dpi=300, bbox_inches='tight')
+
+    return fig
+
+
+def save_hourly_results(network, output_dir):
+    """
+    (Non usato nel main corrente, mantenuto per compatibilità)
+    """
+    import os
+    import pandas as pd
+
+    os.makedirs(output_dir, exist_ok=True)
+    snaps = network.snapshots
+
+    def z():
+        return pd.Series(0.0, index=snaps)
+
+    pv_generation   = network.generators_t.p.get("Rooftop PV", z())
+    grid_import     = (-network.links_t.p1.get("Grid Import", z())).clip(lower=0.0)
+    pv_export       = (-network.links_t.p1.get("PV Export",  z())).clip(lower=0.0)
+    elec_load       = network.loads_t.p_set.get("Building Elec Load", z())
+    heat_load       = network.loads_t.p_set.get("Building Heat Load", z())
+    hp_output_th    = (-network.links_t.p1.get("Heat Pump", z())).clip(lower=0.0)
+
+    th_store_soc    = network.stores_t.e.get("Thermal Store", z())
+    th_store_charge = (-network.links_t.p1.get("Thermal Charge", z())).clip(lower=0.0)
+    th_store_disp   = ( network.links_t.p0.get("Thermal Dispatch", z())).clip(lower=0.0)
+
+    batt_soc        = network.stores_t.e.get("Battery Store", z())
+    batt_charge     = (-network.links_t.p1.get("Battery Charge", z())).clip(lower=0.0)
+    batt_dispatch   = ( network.links_t.p0.get("Battery Dispatch", z())).clip(lower=0.0)
+
+    df_hourly = pd.DataFrame({
+        "timestamp":           snaps,
+        "pv_generation":       pv_generation.values,
+        "electric_load":       elec_load.values,
+        "heat_load":           heat_load.values,
+        "grid_import":         grid_import.values,
+        "pv_export":           pv_export.values,
+        "hp_output_th":        hp_output_th.values,
+        "th_store_soc":        th_store_soc.values,
+        "th_store_charge":     th_store_charge.values,
+        "th_store_dispatch":   th_store_disp.values,
+        "battery_soc":         batt_soc.values,
+        "battery_charge":      batt_charge.values,
+        "battery_dispatch":    batt_dispatch.values,
+    })
+
+    df_hourly.to_csv(os.path.join(output_dir, "hourly_results.csv"), index=False)
+    return df_hourly
+
+
+# ======================= Breakdown utilities =======================
+
+def compute_pv_battery_breakdown(net):
+    """
+    Totali [MWh] lato edificio (post-perdite per l'import):
+      • Grid Import (post-perdite, lato building) → -p1 su "Grid Import"
+      • PV → Building Elec                        → p0 su "PV Autoconsumo"
+      • PV → Battery Storage                      → p0 su "Battery Charge"
+      • Battery → Building Elec                   → p0 su "Battery Dispatch"
+      • PV → Heat Source (Heat Pump, elettrico)   → p0 su "Heat Pump"
+    """
+    import pandas as pd
+    Z = pd.Series(0.0, index=net.snapshots)
+
+    grid_imp    = (-net.links_t.p1.get('Grid Import', Z)).clip(lower=0.0)
+    pv_to_load  =  net.links_t.p0.get('PV Autoconsumo',  Z).clip(lower=0.0)
+    pv_to_batt  =  net.links_t.p0.get('Battery Charge',  Z).clip(lower=0.0)
+    batt_to_load=  net.links_t.p0.get('Battery Dispatch',Z).clip(lower=0.0)
+    pv_to_hp    =  net.links_t.p0.get('Heat Pump',       Z).clip(lower=0.0)
+
+    w = getattr(net.snapshot_weightings, 'generators', pd.Series(1.0, index=net.snapshots))
+    return {
+        'Grid Import (post-loss) [MWh]':         (grid_imp * w).sum(),
+        'PV → Building Elec [MWh]':              (pv_to_load * w).sum(),
+        'PV → Battery Storage [MWh]':            (pv_to_batt * w).sum(),
+        'Battery → Building Elec [MWh]':         (batt_to_load * w).sum(),
+        'PV → Heat Source Bus (Heat Pump) [MWh_el]': (pv_to_hp * w).sum(),
+    }
+
+
+def plot_pv_battery_breakdown(net, scenario_name='scenario', output_dir=None):
+    import os
+    import matplotlib.pyplot as plt
+    from scripts.plotting_utils import setup_plotting_style
+
+    breakdown = compute_pv_battery_breakdown(net)
+    labels, values = zip(*breakdown.items())
+
+    setup_plotting_style()
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.bar(labels, values)
+    for bar in bars:
+        h = bar.get_height()
+        ax.annotate(f'{h:.1f}', xy=(bar.get_x() + bar.get_width()/2, h),
+                    xytext=(0, 4), textcoords='offset points',
+                    ha='center', va='bottom')
+
+    ax.tick_params(axis='x', labelsize=9, labelrotation=30)
+    ax.set_ylabel('Energia elettrica [MWh]')
+    ax.set_title(f'Electric Energy Breakdown – {scenario_name}')
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    fig.tight_layout()
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(os.path.join(output_dir, f'{scenario_name}_electric_breakdown.png'),
+                    dpi=300, bbox_inches='tight')
+    return fig
+
+
+def compute_thermal_breakdown(net):
+    """
+    Usa p0 per i link (uscita dal bus0) e include anche il DSM Heat Dispatch
+    quando calcola il DH “effettivo”.
+    """
+    import pandas as pd
+    Z = pd.Series(0.0, index=net.snapshots)
+
+    # Domande
+    inf  = net.loads_t.p_set.get('Building Heat Load',  Z).sum()
+    flex = net.loads_t.p_set.get('DSM Heat Flex Load',  Z).sum()
+    total_load = inf + flex
+
+    flows = net.links_t.p0
+    hp_direct    = flows.get('Thermal Discharge', Z).sum()
+    tes_charge   = flows.get('Thermal Charge',    Z).sum()
+    tes_dispatch = flows.get('Thermal Dispatch',  Z).sum()
+    dsm_dispatch = flows.get('DSM Heat Dispatch', Z).sum()
+
+    effective_dh = total_load - hp_direct - tes_dispatch - dsm_dispatch
+
+    return {
+        'Effective DH Import':             effective_dh,
+        'Heat Source → Building Heat':     hp_direct,
+        'Heat Source → Thermal Storage':   tes_charge,
+        'Thermal Storage → Building Heat': tes_dispatch,
+        'DSM Heat → Building Heat':        dsm_dispatch,
+    }
+
+
+def plot_thermal_breakdown(net, scenario_name='scenario', output_dir=None):
+    from scripts.plotting_utils import setup_plotting_style
+    import os
+    import matplotlib.pyplot as plt
+
+    breakdown = compute_thermal_breakdown(net)
+    labels, values = zip(*breakdown.items())
+
+    setup_plotting_style()
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.bar(labels, values)
+    for bar in bars:
+        h = bar.get_height()
+        ax.annotate(f'{h:.1f}', xy=(bar.get_x() + bar.get_width()/2, h),
+                    xytext=(0, 4), textcoords='offset points',
+                    ha='center', va='bottom')
+
+    ax.tick_params(axis='x', labelsize=8, labelrotation=30)
+    ax.set_ylabel('Energia termica [MWh_th]')
+    ax.set_title(f'Flussi Termici – {scenario_name}')
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    fig.tight_layout()
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(os.path.join(output_dir, f'{scenario_name}_thermal_breakdown.png'),
+                    dpi=300, bbox_inches='tight')
+    return fig
+
+
+def plot_dsm_thermal_breakdown(hourly_df, scenario_name='scenario', output_dir=None):
+    """
+    DSM termico: charge/dispatch e domanda residua (inflex + charge − dispatch).
+    """
+    import os
+    import matplotlib.pyplot as plt
+    from scripts.plotting_utils import setup_plotting_style
+
+    dsm_charge      = hourly_df['heat_charge_mwh'].sum()
+    dsm_dispatch    = hourly_df['heat_dispatch_mwh'].sum()
+    heat_flexible   = hourly_df['heat_charge_mwh'].sum()
+    heat_inflexible = hourly_df['heat_inflexible_load_mwh'].sum()
+    residual        = heat_inflexible + dsm_charge - dsm_dispatch
+
+    breakdown = {
+        'DSM Heat Charge':        dsm_charge,
+        'DSM Heat Dispatch':      dsm_dispatch,
+        'Heat Flexible Load':     heat_flexible,
+        'Inflexible Heat Demand': residual,
+    }
+
+    labels, values = zip(*breakdown.items())
+
+    setup_plotting_style()
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.bar(labels, values)
+    for bar in bars:
+        h = bar.get_height()
+        ax.annotate(f'{h:.1f}',
+                    xy=(bar.get_x() + bar.get_width()/2, h),
+                    xytext=(0,4), textcoords='offset points',
+                    ha='center', va='bottom')
+
+    ax.tick_params(axis='x', labelsize=9, labelrotation=30)
+    ax.set_ylabel('Energia termica [MWh_th]')
+    ax.set_title(f'DSM Thermal Breakdown – {scenario_name}')
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    fig.tight_layout()
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(os.path.join(output_dir, f'{scenario_name}_dsm_thermal_breakdown.png'),
+                    dpi=300, bbox_inches='tight')
+    return fig
+
+
+if __name__ == "__main__":
+    print("This module is not meant to be run directly.")
+    print("Import it and use its functions in your scripts.")
