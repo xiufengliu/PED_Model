@@ -1,0 +1,18 @@
+Metric,Baseline,High PV,Difference,Percentage Change
+Total Electricity Demand (MWh/year),1046.54,1046.54,0.00,0.0%
+Total Heat Demand (MWh/year),1074.99,1074.99,0.00,0.0%
+Total PV Generation (MWh/year),64.13,159.36,95.23,148.5%
+Total Grid Import (MWh/year),963.28,866.11,-97.17,-10.1%
+Total Grid Export (MWh/year),0.00,0.00,0.00,0.0%
+Total Heat Production (MWh/year),1467.99,1467.99,0.00,0.0%
+Average Electricity Price (EUR/MWh),70.78,70.78,0.00,0.0%
+Average Thermal Energy Price (EUR/MWh),69.73,69.73,0.00,0.0%
+Total Electricity Cost (EUR/year),68181.28,61303.42,-6877.86,-10.1%
+Total Heat Cost (EUR/year),102363.22,102363.22,0.00,0.0%
+Total Energy Cost (EUR/year),170544.50,163666.64,-6877.86,-4.0%
+PV Self-Consumption (%),100.00,100.00,0.00,0.0%
+Electricity Self-Sufficiency (%),6.24,15.23,8.99,144.1%
+Grid Import CO2 Emissions (tonnes CO2/year),267.61,240.59,-27.02,-10.1%
+Heat CO2 Emissions (tonnes CO2/year),262.78,262.78,0.00,0.0%
+Total CO2 Emissions (tonnes CO2/year),530.38,503.36,-27.02,-5.1%
+CO2 Emissions per Apartment (tonnes CO2/apartment/year),3.21,3.05,-0.16,-5.1%
