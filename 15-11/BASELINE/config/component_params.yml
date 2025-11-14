@@ -1,0 +1,142 @@
+# config/component_params.yml
+# Parameters for components used across scenarios, unless overridden
+
+# Grid Connection Parameters
+grid:
+  capacity_mw: 0.25
+  import_cost_eur_per_kwh: variable  # Using variable electricity prices from grid_prices.csv
+  price_profile: grid_prices.csv  # File containing hourly electricity prices
+  export_price_eur_per_kwh: variable
+  transformer_efficiency: 0.98
+  CO2_emissions_kg_per_mwh: 57.3
+  
+
+# Social Building Parameters
+social_building:
+  num_apartments: 165
+  num_floors: 13                    # Estimated from image (counting balconies)
+  floor_area_m2: 12500               # Estimated
+  roof_area_m2: 962.94                
+  construction_year: 1970           # Typical for Danish concrete block social housing
+  wall_u_value: 0.6                 # W/(m²K), concrete panel, minimal insulation (pre-renovation)
+  window_u_value: 1.7               # W/(m²K), double-glazed, possible renovations
+  electricity_load_profile: electricity_demand.csv
+  heat_load_profile: heat_demand.csv
+  electricity_peak_mw: 0.23         # Increased slightly for elevator/common loads
+  heat_peak_mw: 0.32                # Slightly above 0.3 MW for worst-case cold snap
+
+# Baseline PV
+baseline_pv:
+  surface_m2: 306.45
+  inverter_efficiency: 0.97         # Modern inverters
+  efficiency_pv: 0.223               # Efficienza del modulo fotovoltaico 
+  profile_file: "weather_data.csv"
+  use_weather_radiation: true
+  marginal_cost: 0                  # No variable cost; sunk cost
+  efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+
+high_pv:
+  surface_m2: 684
+  inverter_efficiency: 0.97         # Modern inverters
+  efficiency_pv: 0.225               # Efficienza del modulo fotovoltaico 
+  profile_file: "weather_data.csv"
+  use_weather_radiation: true
+  marginal_cost: 0                  # No variable cost; sunk cost
+  efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+
+pv_battery_1:
+  surface_m2:           684
+  efficiency_pv:        0.223
+  inverter_efficiency:  0.98         #l'energia rinnovabile prodotta viene fornita al social building per soddisfare la domanda elettrica
+  battery:
+    p_nom_mw:           0.04          #POTENZA
+    e_nom_mwh:          0.16           #ENERGIA\CAPACITA
+    autonomy_hours:     4    # ← ecco il tuo desired_duration_h
+    efficiency_round_trip: 0.90          #tra i pannelli e la batteria
+    efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+pv_battery_2:
+  surface_m2:           684
+  efficiency_pv:        0.223
+  inverter_efficiency:  0.98         #l'energia rinnovabile prodotta viene fornita al social building per soddisfare la domanda elettrica
+  battery:
+    p_nom_mw:           0.08         #POTENZA
+    e_nom_mwh:          0.32          #ENERGIA\CAPACITA
+    autonomy_hours:     4    # ← ecco il tuo desired_duration_h
+    efficiency_round_trip: 0.90          #tra i pannelli e la batteria
+    efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+pv_battery_3:
+  surface_m2:           684
+  efficiency_pv:        0.223
+  inverter_efficiency:  0.98         #l'energia rinnovabile prodotta viene fornita al social building per soddisfare la domanda elettrica
+  battery:
+    p_nom_mw:           0.16         #POTENZA
+    e_nom_mwh:          0.64          #ENERGIA\CAPACITA
+    autonomy_hours:     4    # ← ecco il tuo desired_duration_h
+    efficiency_round_trip: 0.90          #tra i pannelli e la batteria
+    efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+
+# Baseline Heat Source
+baseline_heat_source:
+  type: district_heating_import                  # gas_boiler | heat_pump | district_heating_import
+  price_profile: null
+  capacity_mw_th: 1                 # Capacità termica disponibile
+  cop: 3                          # (solo heat_pump)
+  standing_loss_per_hour: 0.002
+  cost_eur_per_mwh_th: 64.34316354        # (solo heat_pump → costo quando usa rete)
+  co2_emissions_dh_kg_per_mwh: 33.9  # (solo district_heating_import)
+  efficiency_heating: 0.98          #from district heating to building heat
+
+#Demand Side Management
+dsm:
+  flexible_load_share: 0.3
+  max_shift_hours: 3
+  efficiency: 1
+
+
+# Building Envelope (Optional for advanced models)
+building_envelope:
+  wall_area_m2: 2700                # 2 long + 2 short sides x height (rough estimate)
+  window_area_m2: 1000              # Each apartment ~6m² windows, 165 apts
+  roof_u_value: 0.3                 # W/(m²K), flat bitumen, possible PV mounting shading
+
+
+
+
+
+
+
+  # --- Parametri di investimento (per lo scenario invest_opt) ---
+investment_parameters:
+  # Tasso di sconto reale (WACC) usato per annualizzare i CapEx
+  discount_rate: 0.05
+
+# --- Parametri specifici dello scenario invest_opt ---
+invest_opt:
+  pv:
+    density_kwp_per_m2:   0.17     # kWp installabili per m² di tetto
+    module_efficiency:    0.223
+    inverter_efficiency:  0.98
+    capex_eur_per_kwp:    800
+    lifetime_yrs:         25
+
+  battery:
+    efficiency_rt:        0.90     # round-trip
+    capex_eur_per_kwh:    300
+    capex_eur_per_kw:     250
+    lifetime_yrs:         15
+
+  heat_pump:
+    cop:                  3.5
+    capex_eur_per_kw_th:  450
+    lifetime_yrs:         20
+
+  thermal_store:
+    efficiency:           0.95
+    capex_eur_per_kwh_th: 25
+    lifetime_yrs:         30
+

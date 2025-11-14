@@ -1,0 +1,47 @@
+# config.yml
+# File di configurazione principale per l'esecuzione.
+# Definisce l'orizzonte del PROGETTO e i percorsi.
+
+paths:
+  # Percorso ai dati di input (es. weather_data.csv)
+  data_input:  'data/input'
+  # Percorso dove salvare i risultati (CSV e grafici)
+  data_output: 'data/output'
+
+finance:
+  # Project lifetime for economic analysis (NPV/Payback calculations)
+  # Set to 15 years for multi-period investment optimization
+  project_years: 15
+
+  # Discount rate for Denmark (2024-2025)
+  # 4% real discount rate is typical for Danish energy infrastructure projects
+  # MUST match the discount_rate in component_params.yml
+  discount_rate: 0.04
+
+  # Expected inflation rate for Denmark
+  inflation_rate: 0.02
+
+  # Capital cost interpretation flag
+  # invest_opt.py provides annualized costs to PyPSA
+  # main.py will de-annualize them for NPV calculations
+  capital_cost_is_annualized: true
+
+scenarios:
+  # Sottocartella per i risultati dello scenario invest_opt
+  invest_opt:
+    output_subdir: 'scenario_invest_opt'
+  
+  # Sottocartella per lo scenario baseline (necessario per il calcolo del Payback)
+  baseline:
+    output_subdir: 'scenario_baseline'
+
+simulation_settings:
+  # Queste impostazioni devono rispecchiare component_params.yml
+  # per coerenza. 'invest_opt.py' userà quelle di component_params.yml
+  # per il multi-anno.
+  start_date: "2025-01-01"
+  num_hours: 8760 # Ore per *ciascun* anno
+  years: [2025, 2026, 2027]
+
+  solver: highs
+  solver_options: {}

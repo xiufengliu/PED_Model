@@ -1,0 +1,218 @@
+# config/component_params.yml
+# Parameters for components used across scenarios, unless overridden
+
+# Grid Connection Parameters
+grid:
+  capacity_mw: 0.25
+  import_cost_eur_per_kwh: variable  # Using variable electricity prices from grid_prices.csv
+  price_profile: grid_prices.csv  # File containing hourly electricity prices
+  export_price_eur_per_kwh: variable
+  transformer_efficiency: 0.98
+  CO2_emissions_kg_per_mwh: 57.3
+  
+
+# Social Building Parameters
+social_building:
+  num_apartments: 165
+  num_floors: 13                    # Estimated from image (counting balconies)
+  floor_area_m2: 12500               # Estimated
+  roof_area_m2: 962.94                
+  construction_year: 1970           # Typical for Danish concrete block social housing
+  wall_u_value: 0.6                 # W/(m²K), concrete panel, minimal insulation (pre-renovation)
+  window_u_value: 1.7               # W/(m²K), double-glazed, possible renovations
+  electricity_load_profile: electricity_demand.csv
+  heat_load_profile: heat_demand.csv
+  electricity_peak_mw: 0.23         # Increased slightly for elevator/common loads
+  heat_peak_mw: 0.32                # Slightly above 0.3 MW for worst-case cold snap
+
+# Baseline PV
+baseline_pv:
+  surface_m2: 306.45
+  inverter_efficiency: 0.97         # Modern inverters
+  efficiency_pv: 0.223               # Efficienza del modulo fotovoltaico 
+  profile_file: "weather_data.csv"
+  use_weather_radiation: true
+  marginal_cost: 0                  # No variable cost; sunk cost
+  efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+
+high_pv:
+  surface_m2: 684
+  inverter_efficiency: 0.97         # Modern inverters
+  efficiency_pv: 0.225               # Efficienza del modulo fotovoltaico 
+  profile_file: "weather_data.csv"
+  use_weather_radiation: true
+  marginal_cost: 0                  # No variable cost; sunk cost
+  efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+
+pv_battery_1:
+  surface_m2:           684
+  efficiency_pv:        0.223
+  inverter_efficiency:  0.98         #l'energia rinnovabile prodotta viene fornita al social building per soddisfare la domanda elettrica
+  battery:
+    p_nom_mw:           0.04          #POTENZA
+    e_nom_mwh:          0.16           #ENERGIA\CAPACITA
+    autonomy_hours:     4    # ← ecco il tuo desired_duration_h
+    efficiency_round_trip: 0.90          #tra i pannelli e la batteria
+    efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+pv_battery_2:
+  surface_m2:           684
+  efficiency_pv:        0.223
+  inverter_efficiency:  0.98         #l'energia rinnovabile prodotta viene fornita al social building per soddisfare la domanda elettrica
+  battery:
+    p_nom_mw:           0.08         #POTENZA
+    e_nom_mwh:          0.32          #ENERGIA\CAPACITA
+    autonomy_hours:     4    # ← ecco il tuo desired_duration_h
+    efficiency_round_trip: 0.90          #tra i pannelli e la batteria
+    efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+pv_battery_3:
+  surface_m2:           684
+  efficiency_pv:        0.223
+  inverter_efficiency:  0.98         #l'energia rinnovabile prodotta viene fornita al social building per soddisfare la domanda elettrica
+  battery:
+    p_nom_mw:           0.16         #POTENZA
+    e_nom_mwh:          0.64          #ENERGIA\CAPACITA
+    autonomy_hours:     4    # ← ecco il tuo desired_duration_h
+    efficiency_round_trip: 0.90          #tra i pannelli e la batteria
+    efficiency_export: 0.95           #tra pv e la grid quando esportiamo
+
+
+# Baseline Heat Source
+baseline_heat_source:
+  type: district_heating_import                  # gas_boiler | heat_pump | district_heating_import
+  price_profile: null
+  capacity_mw_th: 1                 # Capacità termica disponibile
+  cop: 3                          # (solo heat_pump)
+  standing_loss_per_hour: 0.002
+  cost_eur_per_mwh_th: 64.34316354        # (solo heat_pump → costo quando usa rete)
+  co2_emissions_dh_kg_per_mwh: 33.9  # (solo district_heating_import)
+  efficiency_heating: 0.98          #from district heating to building heat
+
+#Demand Side Management
+dsm:
+  flexible_load_share: 0.3
+  max_shift_hours: 3
+  efficiency: 1
+
+
+# Building Envelope (Optional for advanced models)
+building_envelope:
+  wall_area_m2: 2700                # 2 long + 2 short sides x height (rough estimate)
+  window_area_m2: 1000              # Each apartment ~6m² windows, 165 apts
+  roof_u_value: 0.3                 # W/(m²K), flat bitumen, possible PV mounting shading
+
+
+
+
+
+
+finance:
+  discount_rate: 0.04              # Denmark 2024-2025: 4% real discount rate for energy projects
+  project_lifetime_years: 15       # Multi-period investment optimization horizon
+  inflation_rate: 0.02             # Expected inflation rate
+
+# Investment costs based on Danish Energy Agency Technology Data 2024
+# and IRENA Renewable Power Generation Costs 2023
+# All costs in EUR (2024 prices)
+capex:
+  # Solar PV (rooftop commercial/residential)
+  pv_per_mw:             650000     # EUR/MW (650 EUR/kW) - Denmark 2024 rooftop PV
+  pv_life_y:             25         # Standard lifetime for PV panels
+  pv_om_fix_per_mw:      13000      # EUR/MW/year - Fixed O&M costs
+  pv_om_var_per_mwh:     0          # Variable O&M negligible
+
+  # Battery Energy Storage System (BESS)
+  battery_e_per_mwh:     200000     # EUR/MWh (200 EUR/kWh) - Lithium-ion 2024
+  battery_p_per_mw:      80000      # EUR/MW (80 EUR/kW) - Power electronics
+  battery_life_y:        15         # Improved lifetime with modern chemistry
+  battery_om_fix_per_mwh: 4000      # EUR/MWh/year - Fixed O&M
+  battery_cycles:        5000       # Cycle life
+
+  # Thermal Energy Storage (TES) - Water tank
+  tes_e_per_mwh:          30000     # EUR/MWh_th (30 EUR/kWh_th) - Insulated water tank
+  tes_p_per_mw:           15000     # EUR/MW_th - Charging/discharging equipment
+  tes_life_y:             25        # Long lifetime for thermal storage
+  tes_om_fix_per_mwh:     600       # EUR/MWh/year - Minimal O&M
+
+  # Heat Pump (Air-to-water)
+  hp_per_mwth:           400000     # EUR/MW_th (400 EUR/kW_th) - Denmark 2024
+  hp_life_y:              20        # Heat pump lifetime
+  hp_om_fix_per_mw:       8000      # EUR/MW/year - Maintenance costs
+
+  # Grid connection and transformer
+  trafo_per_mw:           50000     # EUR/MW - Transformer costs
+  trafo_life_y:           30        # Long lifetime
+  trafo_om_fix_per_mw:    1000      # EUR/MW/year
+
+  # Export connection
+  export_link_per_mw:     20000     # EUR/MW - Grid export connection
+  export_link_life_y:     30
+  export_link_om_per_mw:  500       # EUR/MW/year
+
+limits:
+  pv_p_nom_max_mw:           2.0
+  battery_e_nom_max_mwh:     6.0
+  battery_p_nom_max_mw:      3.0
+  tes_e_nom_max_mwh:        12.0
+  tes_p_nom_max_mw:          5.0
+  hp_p_nom_max_mwth:         3.0
+  grid_import_p_nom_max_mw:  5.0
+  export_p_nom_max_mw:       5.0
+
+grid:
+  transformer_efficiency: 0.985
+  import_cost_eur_per_kwh: variable   # o un numero fisso (€/kWh)
+  CO2_emissions_kg_per_mwh: 160
+
+social_building:
+  electricity_load_profile: electricity_demand.csv
+  electricity_peak_mw: 0.23
+  heat_load_profile: heat_demand.csv
+  heat_peak_mw: 0.32
+
+pv:
+  efficiency_pv: 0.19
+  inverter_efficiency: 0.97
+  surface_m2: 1000
+
+battery:
+  efficiency_round_trip: 0.90
+
+tes:
+  standing_loss_per_hour: 0.005
+
+hp:
+  eta_carnot: 0.50
+  supply_temp_C: 50
+
+dsm:
+  elec_e_nom_max_mwh:       1.0
+  elec_p_nom_max_mw:        1.0
+  elec_eta_charge:          0.97
+  elec_eta_discharge:       0.97
+  elec_soc_min_pu:          0.0
+  elec_soc_max_pu:          1.0
+  elec_standing_loss_h:     0.0
+  elec_cost_eur_per_mwh_ch: 2.0
+  elec_cost_eur_per_mwh_dis: 2.0
+
+  heat_e_nom_max_mwh:       2.0
+  heat_p_nom_max_mw:        1.5
+  heat_eta_charge:          0.98
+  heat_eta_discharge:       0.98
+  heat_soc_min_pu:          0.0
+  heat_soc_max_pu:          1.0
+  heat_standing_loss_h:     0.002
+  heat_cost_eur_per_mwh_ch: 1.5
+  heat_cost_eur_per_mwh_dis: 1.5
+
+
+simulation_settings:
+  start_date: "2018-01-01"
+  num_hours: 8760
+  years: [2018, 2019, 2020]
+  year_objective_weights: [1.0, 1.0, 1.0]  # opzionale; default tutti 1.0
+  solver: highs

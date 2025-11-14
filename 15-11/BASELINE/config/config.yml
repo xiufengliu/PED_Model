@@ -1,0 +1,115 @@
+# config/config.yml
+project_name: PED_Lyngby_Model
+description: Simulation of the Positive Energy District concept in Lyngby.
+
+# Define scenarios to run (add more based on scenario suggestions)
+scenarios:
+  baseline:
+    description: "Reference case with existing loads and minimal local assets."
+    # Scenario-specific settings could go here if needed
+    output_subdir: "scenario_baseline" # Subdirectory for results
+
+  high_pv:
+    description: "Maximized solar PV deployment on available surfaces within the district."
+    output_subdir: "scenario_high_pv" # Subdirectory for results
+
+  pv_battery_1:
+    description: Combines high PV penetration with significant electrical battery storage. Different battery sizes can be tested.
+    output_subdir: "scenario_pv_battery_1" #Quantify the impact of batteries on increasing PV self-consumption, reducing grid dependency (especially peak imports), and potentially enabling peak shaving.
+
+  pv_battery_2:
+    description: Combines high PV penetration with significant electrical battery storage. Different battery sizes can be tested.
+    output_subdir: "scenario_pv_battery_2" #Quantify the impact of batteries on increasing PV self-consumption, reducing grid dependency (especially peak imports), and potentially enabling peak shaving.
+  
+  pv_battery_3:
+    description: Combines high PV penetration with significant electrical battery storage. Different battery sizes can be tested.
+    output_subdir: "scenario_pv_battery_3" #Quantify the impact of batteries on increasing PV self-consumption, reducing grid dependency (especially peak imports), and potentially enabling peak shaving.
+
+  thermal_storage_COP1:
+    description: Focuses on optimizing the heating system by incorporating thermal storage (e.g., hot water tanks) potentially coupled with heat pumps or optimized district heating interaction.
+    output_subdir: "scenario_thermal_storage_COP1" #Evaluate flexibility in the heating sector, potential for sector coupling (using renewable electricity for heat), and reducing peak heat demand.
+
+  thermal_storage_COP1_HP:
+    description: Focuses on optimizing the heating system by incorporating thermal storage (e.g., hot water tanks) potentially coupled with heat pumps or optimized district heating interaction.
+    output_subdir: "scenario_thermal_storage_COP1_HP" #Evaluate flexibility in the heating sector, potential for sector coupling (using renewable electricity for heat), and reducing peak heat demand.
+
+  thermal_storage_COP2:
+    description: Focuses on optimizing the heating system by incorporating thermal storage (e.g., hot water tanks) potentially coupled with heat pumps or optimized district heating interaction.
+    output_subdir: "scenario_thermal_storage_COP2" #Evaluate flexibility in the heating sector, potential for sector coupling (using renewable electricity for heat), and reducing peak heat demand.
+
+  thermal_storage_COP3:
+    description: Focuses on optimizing the heating system by incorporating thermal storage (e.g., hot water tanks) potentially coupled with heat pumps or optimized district heating interaction.
+    output_subdir: "scenario_thermal_storage_COP3" #Evaluate flexibility in the heating sector, potential for sector coupling (using renewable electricity for heat), and reducing peak heat demand.
+
+  dsm:
+    description: Simulates the impact of demand-side management by shifting flexible electrical or thermal loads (e.g., EV charging, pre-heating/cooling, specific pool/stadium operations) based on local generation or price signals.
+    output_subdir: "scenario_dsm" #Assess the value of load flexibility in reducing costs and integrating variable renewables.
+
+  dsm_HP:
+    description: Simulates the impact of demand-side management by shifting flexible electrical or thermal loads (e.g., EV charging, pre-heating/cooling, specific pool/stadium operations) based on local generation or price signals.
+    output_subdir: "scenario_dsm_HP" #Assess the value of load flexibility in reducing costs and integrating variable renewables.
+
+  dsm_HP_th_priority:
+    description: Simulates the impact of demand-side management by shifting flexible electrical or thermal loads (e.g., EV charging, pre-heating/cooling, specific pool/stadium operations) based on local generation or price signals.
+    output_subdir: "scenario_dsm_HP_th_priority" #Assess the value of load flexibility in reducing costs and integrating variable renewables.
+
+
+  dsm_HP_el_priority:
+    description: Simulates the impact of demand-side management by shifting flexible electrical or thermal loads (e.g., EV charging, pre-heating/cooling, specific pool/stadium operations) based on local generation or price signals.
+    output_subdir: "scenario_dsm_HP_el_priority" #Assess the value of load flexibility in reducing costs and integrating variable renewables.
+
+
+
+
+  self_opt:
+    description: "Compares operational strategies for a given asset configuration. cost_opt minimizes total operational monetary costs. self_suff_max modifies the objective to prioritize using local resources, potentially at a slightly higher monetary cost."
+    output_subdir: "scenario_self_opt" # Understand the trade-off between economic efficiency and energy independence/self-sufficiency
+
+  self_opt_HP:
+    description: "Compares operational strategies for a given asset configuration. cost_opt minimizes total operational monetary costs. self_suff_max modifies the objective to prioritize using local resources, potentially at a slightly higher monetary cost."
+    output_subdir: "scenario_self_opt_HP" # Understand the trade-off between economic efficiency and energy independence/self-sufficiency
+
+  cost_opt:
+    description: "Compares operational strategies for a given asset configuration. cost_opt minimizes total operational monetary costs. self_suff_max modifies the objective to prioritize using local resources, potentially at a slightly higher monetary cost."
+    output_subdir: "scenario_cost_opt" # Understand the trade-off between economic efficiency and energy independence/self-sufficiency
+
+  cost_opt_HP:
+    description: "Compares operational strategies for a given asset configuration. cost_opt minimizes total operational monetary costs. self_suff_max modifies the objective to prioritize using local resources, potentially at a slightly higher monetary cost."
+    output_subdir: "scenario_cost_opt_HP" # Understand the trade-off between economic efficiency and energy independence/self-sufficiency
+
+
+  future_prices_cost_opt:
+    description: "Tests a chosen configuration (e.g., pv_battery) against different future energy price assumptions (e.g., higher carbon taxes, different grid tariff structures)."
+    output_subdir: "future_prices_cost_opt" # Assess the economic robustness of the PED design under uncertain market conditions
+
+  future_prices_self_opt:
+    description: "Tests a chosen configuration (e.g., pv_battery) against different future energy price assumptions (e.g., higher carbon taxes, different grid tariff structures)."
+    output_subdir: "future_prices_self_opt" # Assess the economic robustness of the PED design under uncertain market conditions
+
+  invest_opt:
+    Description: Allows the model to determine the optimal capacities of PV, batteries, thermal storage, etc., by minimizing total system costs (operational + annualized investment) over the project lifetime.
+    Purpose: Identify the most cost-effective mix and sizing of technologies from an investment perspective.
+
+
+
+
+
+
+
+
+
+  
+
+simulation_settings:
+  solver: highs # Default solver (ensure it's installed)
+  solver_options: {}
+    # e.g., mipgap: 0.01
+  # Time period details (ensure these match your data)
+  start_date: "2025-01-01"
+  num_hours: 8760 # Full year simulation
+
+# Paths (relative to project root)
+paths:
+  data_input: data/input
+  data_output: data/output
+  config: config
