@@ -1,0 +1,35 @@
+{
+  "total_capex_eur": 820184.8162701696,
+  "capex_breakdown": {
+    "pv": 302711.0070646415,
+    "battery": 176817.85520419228,
+    "thermal_storage": 191543.19681989367,
+    "heat_pump": 122178.89175857004,
+    "transformer": 26933.86542287217,
+    "export_connection": -0.0
+  },
+  "optimal_capacities": {
+    "pv_mw": 0.46570924163791,
+    "battery_energy_mwh": 0.8047606814977386,
+    "battery_power_mw": 0.19832148630805702,
+    "tes_energy_mwh": 5.886726583639646,
+    "tes_power_mw": 0.9960932873802866,
+    "heat_pump_mw": 0.3054472293964251,
+    "grid_import_mw": 0.5386773084574434,
+    "export_capacity_mw": -0.0
+  },
+  "annual_costs": {
+    "baseline_eur_per_year": 140013.32725799305,
+    "optimized_eur_per_year": 81055.09935955521,
+    "annual_savings_eur": 58958.227898437835
+  },
+  "npv_eur": -164664.3961812745,
+  "payback_time_years": {
+    "simple": 13.911286778887415,
+    "discounted": Infinity
+  },
+  "financial_parameters": {
+    "discount_rate": 0.04,
+    "project_lifetime_years": 15
+  }
+}

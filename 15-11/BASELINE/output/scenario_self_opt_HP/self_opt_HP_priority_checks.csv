@@ -1,0 +1,7 @@
+check,violations,examples
+import_and_export_same_hour,0,
+battery_charge_and_discharge_same_hour,3,2025-06-20 08:00:00;2025-08-11 07:00:00;2025-08-22 07:00:00
+tes_charge_and_dispatch_same_hour,20,2025-05-28 12:00:00;2025-05-28 13:00:00;2025-05-28 14:00:00;2025-05-28 15:00:00;2025-05-29 12:00:00;2025-05-29 13:00:00;2025-05-29 14:00:00;2025-05-29 15:00:00;2025-07-02 11:00:00;2025-07-02 12:00:00
+export_while_import_or_batt_discharge,0,
+dh_used_while_tes_not_dispatching,0,
+export_while_battery_charging,0,
